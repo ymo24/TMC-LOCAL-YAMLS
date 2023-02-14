@@ -1,0 +1,46 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: cluster-vcdke-worker-node-pool-1
+  namespace: cluster-vcdke-ns
+spec:
+  template:
+    spec:
+      users:
+        - name: root
+          sshAuthorizedKeys:
+            - ssh-rsa
+              AAAAB3NzaC1yc2EAAAADAQABAAACAQC8Cn92MKaJnGsuIydXY+HX9s4f+6PDMvbQMs/LJ0OG0Ekjlsak00o44UVSGKdDqCSnCo4+tkdij9mK28dWUXvQDKUBwjL51I5pE5mWFu2iLCvmZWtCTAToDtmEpdaB4wUDRI4wuulLEGV4gnU3uROkh/7arK/cykMED1bTVcXTQY7rcim1OS+5Gm05LS1jZuHuUQ9JREbafk8pDWYrUGoMlrp2d8eE/4gaqZxgBppGd1Iz7vJnVvYacKcNgbglURetfBWztJaqGuuyRQ4HIUKsmfoTDjBr7koTwhwlOzH9dBV0VossMcZjZgXMWVMT2RbZFDspkjirXbMMsEXxIm09egzc97cwzM0ZDM/R7U0uyYk5SS0P+BhLzVQAvk9sYMXRlCzNJctxW+J3uGfTikOTHWOapwtYAn5iA+6MBUnkJvv78hbn6pTKPe9KCsXY/i/jIxLGrZfvnc1v5VTvelTJnk0XUPAdkuSqKL98T4gERL5p6gX7KcUEgc/uQZ0jxp96BxkmTZ9vIsQe5nkzqXpbdx4J0RBXiFi3bdk7ok0UqOjfL1xzeS8wxjSu5I8LMirfI1cUPRE2g/Lnad0fCyz/88a0NHCWln+ylH7cG0Xu12tif6spfckCVgNarJDegP2w6sosPidyw66239qFonH8oAi/NFon01b+JecpCWqMxQ==
+              ymo@vmware.com
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /run/containerd/containerd.sock
+          kubeletExtraArgs:
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            cloud-provider: external
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: cluster-vcdke-worker-node-pool-1
+  namespace: cluster-vcdke-ns
+spec:
+  clusterName: cluster-vcdke
+  replicas: 2
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: cluster-vcdke-worker-node-pool-1
+          namespace: cluster-vcdke-ns
+      clusterName: cluster-vcdke
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: VCDMachineTemplate
+        name: cluster-vcdke-worker-node-pool-1
+        namespace: cluster-vcdke-ns
+      version: v1.22.9+vmware.1
